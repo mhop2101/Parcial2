@@ -2,6 +2,9 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { BonoModule } from './bono/bono.module';
+import { ClaseModule } from './clase/clase.module';
+import { UsuarioModule } from './usuario/usuario.module';
 
 @Module({
   imports: [
@@ -20,6 +23,9 @@ import { TypeOrmModule } from '@nestjs/typeorm';
       }),
     }),
     TypeOrmModule.forFeature([]),
+    BonoModule,
+    ClaseModule,
+    UsuarioModule,
 
   ],
   controllers: [AppController],
