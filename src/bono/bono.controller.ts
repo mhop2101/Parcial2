@@ -1,34 +1,29 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Post, Get, Delete, Param, Body, NotFoundException, ParseIntPipe, HttpCode, HttpStatus, } from '@nestjs/common';
 import { BonoService } from './bono.service';
 import { CreateBonoDto } from './dto/create-bono.dto';
-import { UpdateBonoDto } from './dto/update-bono.dto';
 
-@Controller('bono')
+@Controller('bonos')
 export class BonoController {
-  constructor(private readonly bonoService: BonoService) {}
+  constructor(private readonly bonoService: BonoService) { }
 
   @Post()
-  create(@Body() createBonoDto: CreateBonoDto) {
-    return this.bonoService.create(createBonoDto);
+  async crearBono(@Body() createBonoDto: CreateBonoDto) {
+    return this.bonoService.crearBono(createBonoDto);
   }
 
-  @Get()
-  findAll() {
-    return this.bonoService.findAll();
+  @Get('clase/:codigo')
+  async findAllBonosByClaseCodigo(@Param('codigo') codigo: string) {
+    return this.bonoService.findAllBonosByClaseCodigo(codigo);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.bonoService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateBonoDto: UpdateBonoDto) {
-    return this.bonoService.update(+id, updateBonoDto);
+  @Get('usuario/:userId')
+  async findAllBonosByUsuario(@Param('userId', ParseIntPipe) userId: number) {
+    return this.bonoService.findAllBonosByUsuario(userId);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.bonoService.remove(+id);
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async deleteBono(@Param('id', ParseIntPipe) id: number) {
+    await this.bonoService.deleteBono(id);
   }
 }

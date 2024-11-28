@@ -5,7 +5,9 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { BonoModule } from './bono/bono.module';
 import { ClaseModule } from './clase/clase.module';
 import { UsuarioModule } from './usuario/usuario.module';
-
+import { Usuario } from './entities/usuario.entity';
+import { Bono } from './entities/bono.entity';
+import { Clase } from './entities/clase.entity';
 @Module({
   imports: [
     TypeOrmModule.forRootAsync({
@@ -16,17 +18,16 @@ import { UsuarioModule } from './usuario/usuario.module';
         username: 'tecweb',
         password: 'tecwebtecweb',
         database: 'Parcial2',
-        entities: [],
+        entities: [Usuario, Bono, Clase],
         synchronize: true,
         droopSchema: true,
         keepConnectionAlive: true,
       }),
     }),
-    TypeOrmModule.forFeature([]),
+    TypeOrmModule.forFeature([Usuario, Bono, Clase]),
     BonoModule,
     ClaseModule,
     UsuarioModule,
-
   ],
   controllers: [AppController],
   providers: [AppService],

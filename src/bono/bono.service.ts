@@ -1,26 +1,59 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Bono } from '../entities/bono.entity';
 import { CreateBonoDto } from './dto/create-bono.dto';
-import { UpdateBonoDto } from './dto/update-bono.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Usuario } from '../entities/usuario.entity';
 
 @Injectable()
 export class BonoService {
-  create(createBonoDto: CreateBonoDto) {
-    return 'This action adds a new bono';
+  constructor(
+    @InjectRepository(Bono) private bonoRepository: Repository<Bono>,
+    @InjectRepository(Usuario) private usuarioRepository: Repository<Usuario>,
+  ) { }
+
+  async crearBono(createBonoDto: CreateBonoDto): Promise<Bono> {
+    const { monto, usuarioId } = createBonoDto;
+
+    if (!monto || monto <= 0) {
+      throw new BadRequestException('monto invalido');
+    }
+
+    const usuario = await this.usuarioRepository.findOne({ where: { id: usuarioId } });
+    if (!usuario) throw new NotFoundException(`usuario no encontrado`);
+    if (usuario.rol !== 'Profesor') {
+      throw new BadRequestException('usuario no es profesor');
+    }
+
+    const bono = this.bonoRepository.create(createBonoDto);
+    bono.usuario = usuario;
+    return this.bonoRepository.save(bono);
   }
 
-  findAll() {
-    return `This action returns all bono`;
+  async findAllBonosByClaseCodigo(codigo: string): Promise<Bono[]> {
+    const bonos = await this.bonoRepository.find({
+      where: { clase: { codigo } },
+      relations: ['clase'],
+    });
+
+    if (bonos.length === 0) {
+      throw new NotFoundException(`no se encontraron bonos`);
+    }
+
+    return bonos;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} bono`;
+  async findAllBonosByUsuario(userId: number): Promise<Bono[]> {
+    const bonos = await this.bonoRepository.find({ where: { usuario: { id: userId } } });
+    return bonos;
   }
 
-  update(id: number, updateBonoDto: UpdateBonoDto) {
-    return `This action updates a #${id} bono`;
-  }
+  async deleteBono(id: number): Promise<void> {
+    const bono = await this.bonoRepository.findOne({ where: { id: id } });
 
-  remove(id: number) {
-    return `This action removes a #${id} bono`;
+    if (bono.calificacion > 4) {
+      throw new BadRequestException('no se puede eliminar bono con calificacion mayor a 4');
+    }
+    await this.bonoRepository.delete(id);
   }
 }

@@ -1,26 +1,50 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Usuario } from '../entities/usuario.entity';
 import { CreateUsuarioDto } from './dto/create-usuario.dto';
-import { UpdateUsuarioDto } from './dto/update-usuario.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Bono } from '../entities/bono.entity';
 
 @Injectable()
 export class UsuarioService {
-  create(createUsuarioDto: CreateUsuarioDto) {
-    return 'This action adds a new usuario';
+  constructor(
+    @InjectRepository(Usuario) private usuarioRepository: Repository<Usuario>,
+    @InjectRepository(Bono) private bonoRepository: Repository<Bono>,
+  ) { }
+
+  async crearUsuario(createUsuarioDto: CreateUsuarioDto): Promise<Usuario> {
+    const { rol, grupoInvestigacion, numeroExtension } = createUsuarioDto;
+
+    if (rol === 'Profesor' && !['TICSW', 'IMAGINE', 'COMIT'].includes(grupoInvestigacion)) {
+      throw new BadRequestException('grupo de investigacion no valido');
+    }
+
+    if (rol === 'Decana' && numeroExtension.toString().length !== 8) {
+      throw new BadRequestException('extension no de 8 digitos');
+    }
+
+    const usuario = this.usuarioRepository.create(createUsuarioDto);
+    return this.usuarioRepository.save(usuario);
   }
 
-  findAll() {
-    return `This action returns all usuario`;
+  async findUsuarioById(id: number): Promise<Usuario> {
+    const usuario = await this.usuarioRepository.findOne({ where: { id } });
+    if (!usuario) throw new NotFoundException('usr no encontrado');
+    return usuario;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} usuario`;
-  }
+  async eliminarUsuario(id: number): Promise<void> {
+    const usuario = await this.findUsuarioById(id);
 
-  update(id: number, updateUsuarioDto: UpdateUsuarioDto) {
-    return `This action updates a #${id} usuario`;
-  }
+    if (usuario.rol === 'Decana') {
+      throw new BadRequestException('no se puede eliminar decana');
+    }
 
-  remove(id: number) {
-    return `This action removes a #${id} usuario`;
+    const bonos = await this.bonoRepository.find({ where: { usuario: { id } } });
+    if (bonos.length > 0) {
+      throw new BadRequestException('usuario tiene bonos');
+    }
+
+    await this.usuarioRepository.delete(id);
   }
 }
