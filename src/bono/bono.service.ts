@@ -4,12 +4,15 @@ import { CreateBonoDto } from './dto/create-bono.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Usuario } from '../entities/usuario.entity';
+import { Clase } from '../entities/clase.entity';
 
 @Injectable()
 export class BonoService {
   constructor(
     @InjectRepository(Bono) private bonoRepository: Repository<Bono>,
     @InjectRepository(Usuario) private usuarioRepository: Repository<Usuario>,
+    @InjectRepository(Clase) private claseRepository: Repository<Clase>,
+
   ) { }
 
   async crearBono(createBonoDto: CreateBonoDto): Promise<Bono> {
@@ -26,6 +29,8 @@ export class BonoService {
     }
 
     const bono = this.bonoRepository.create(createBonoDto);
+    const clase = await this.claseRepository.findOne({ where: { id: createBonoDto.claseId } });
+    bono.clase = clase;
     bono.usuario = usuario;
     return this.bonoRepository.save(bono);
   }
@@ -45,6 +50,9 @@ export class BonoService {
 
   async findAllBonosByUsuario(userId: number): Promise<Bono[]> {
     const bonos = await this.bonoRepository.find({ where: { usuario: { id: userId } } });
+    if (bonos.length === 0) {
+      throw new NotFoundException(`no se encontraron bonos`);
+    }
     return bonos;
   }
 
