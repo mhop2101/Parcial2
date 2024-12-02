@@ -8,6 +8,7 @@ import { UsuarioModule } from './usuario/usuario.module';
 import { Usuario } from './entities/usuario.entity';
 import { Bono } from './entities/bono.entity';
 import { Clase } from './entities/clase.entity';
+import { AModule } from './a/a.module';
 @Module({
   imports: [
     TypeOrmModule.forRootAsync({
@@ -28,6 +29,7 @@ import { Clase } from './entities/clase.entity';
     BonoModule,
     ClaseModule,
     UsuarioModule,
+    AModule,
   ],
   controllers: [AppController],
   providers: [AppService],
